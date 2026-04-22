@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - NovitData</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Menyembunyikan konten sampai status auth terverifikasi */
+        body {
+            display: none;
+        }
+
+        .dashboard-container {
+            padding: 40px;
+            text-align: center;
+        }
+
+        #logoutBtn {
+            max-width: 200px;
+            margin: 20px auto;
+            background-color: #d9534f;
+        }
+
+        #logoutBtn:hover {
+            background-color: #c9302c;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <h1>Selamat Datang di Dashboard NovitData</h1>
+        <p id="welcome-text">Memuat data pengguna...</p>
+        <button id="logoutBtn">Logout</button>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+
+</html>
