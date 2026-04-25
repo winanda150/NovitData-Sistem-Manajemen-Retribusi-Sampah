@@ -35,6 +35,15 @@ body, html {
     transition: background-color var(--transition-speed), color var(--transition-speed);
 }
 
+body,
+body:focus,
+body:active {
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    border: none;
+    box-shadow: none;
+}
+
 .halaman-login {
     background-image: url('Background-Halaman-Login.webp'); 
     background-size: cover;
@@ -42,7 +51,7 @@ body, html {
     background-repeat: no-repeat;
     width: 100%;
     min-height: 100vh;
-    display: none; /* Sembunyikan form login secara default agar tidak muncul sekejap */
+    display: none;
     justify-content: center;
     align-items: center;
 }
@@ -159,6 +168,13 @@ button:hover {
     text-align: center;
     box-shadow: 0 10px 25px rgba(0,0,0,0.2);
     animation: popupPop 0.3s ease-out;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+    transition: background-color var(--transition-speed);
+}
+
+.popup-content::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
 }
 
 /* Animasi Centang SVG */
@@ -290,6 +306,7 @@ button:hover {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
     margin-bottom: 20px;
 }
 
@@ -530,11 +547,19 @@ tfoot .footer-total-row .row-total {
     color: var(--text-main);
     width: 90%;
     max-width: 500px;
-    padding: 30px;
+    padding: 25px;
+    max-height: 90vh;
+    overflow-y: auto;
+    scrollbar-width: none; /* Sembunyikan scrollbar di Firefox */
+    -ms-overflow-style: none; /* Sembunyikan scrollbar di IE/Edge */
     border-radius: 12px;
     box-shadow: 0 15px 35px rgba(0,0,0,0.2);
     transition: background-color var(--transition-speed), color var(--transition-speed);
     animation: popupPop 0.3s ease-out;
+}
+
+.modal-content::-webkit-scrollbar {
+    display: none; /* Sembunyikan scrollbar di Chrome, Safari, dan Opera */
 }
 
 .modal-header {
@@ -742,6 +767,28 @@ tfoot .footer-total-row .row-total {
         padding: 30px 20px;
         max-width: 320px;
     }
+    
+    .modal-content {
+        padding: 20px;
+        width: 95%;
+        border-radius: 15px;
+    }
+
+    .modal-header h2 {
+        font-size: 18px;
+    }
+
+    .modal-footer {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .modal-footer button {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 12px;
+    }
+
     .checkmark-wrapper {
         width: 60px;
         height: 60px;
@@ -852,5 +899,14 @@ tfoot .footer-total-row .row-total {
 
     .month-grid {
         grid-template-columns: repeat(3, 1fr);
+    }
+
+    .modal-content {
+        max-width: 600px;
+        padding: 35px;
+    }
+
+    .action-bar h2 {
+        font-size: 20px;
     }
 }
