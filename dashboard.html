@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="description" content="Sistem manajemen retribusi pelayanan angkut sampah Br. Dangin Jalan.">
+    <title>Dashboard - NovitData</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Menyembunyikan konten sampai status auth terverifikasi */
+        body {
+            display: none;
+        }
+    </style>
+    <!-- SheetJS CDN for Excel Export -->
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <!-- GSAP CDN for Modern Animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <div class="header-info">
+                <h1>NovitData</h1>
+                <p id="welcome-text">Memuat data...</p>
+            </div>
+            <div class="header-actions">
+                <button id="themeToggle" class="btn-theme"><i class="fas fa-sun"></i></button>
+                <button id="logoutBtn">Logout</button>
+            </div>
+        </header>
+
+        <main class="content-section">
+            <!-- Baris Statistik -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(40, 167, 69, 0.1); color: #28a745;"><i class="fas fa-wallet"></i></div>
+                    <div class="stat-info">
+                        <span>Total Pendapatan</span>
+                        <h3 id="statTotalRevenue">Rp 0</h3>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(0, 123, 255, 0.1); color: #007bff;"><i class="fas fa-users"></i></div>
+                    <div class="stat-info">
+                        <span>Total Warga</span>
+                        <h3 id="statTotalWarga">0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-bar">
+                <h2>Data Retribusi Sampah <select id="tahunRetribusi" class="select-tahun"></select></h2>
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Cari nama warga...">
+                </div>
+                <button id="btnTambahWarga" class="btn-primary"><i class="fas fa-plus"></i> Tambah Warga</button>
+            </div>
+
+            <div class="table-responsive">
+                <table id="tabelRetribusi">
+                    <thead>
+                        <tr>
+                            <th class="no-cell">No</th>
+                            <th class="nama-warga-cell">Nama Warga</th>
+                            <th>Jan</th>
+                            <th>Feb</th>
+                            <th>Mar</th>
+                            <th>Apr</th>
+                            <th>Mei</th>
+                            <th>Jun</th>
+                            <th>Jul</th>
+                            <th>Agu</th>
+                            <th>Sep</th>
+                            <th>Okt</th>
+                            <th>Nov</th>
+                            <th>Des</th>
+                            <th>Total</th>
+                            <th>Edit</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataWargaBody">
+                        <!-- Data warga akan diisi di sini melalui JavaScript -->
+                    </tbody>
+                    <tfoot id="dataWargaFooter">
+                        <!-- Total per bulan akan diisi di sini -->
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- New table footer for pagination and download -->
+            <div class="table-footer">
+                <div class="pagination-info">
+                    <!-- Info seperti "Menampilkan 1-10 dari 50 warga" akan muncul di sini -->
+                </div>
+                <div class="right-footer-actions">
+                    <div class="pagination-controls">
+                        <!-- Tombol pagination (Prev, 1, 2, Next) akan muncul di sini -->
+                    </div>
+                    <button id="btnExportExcel" class="btn-primary">
+                        <span class="btn-content-static">
+                            <i class="fas fa-file-excel"></i> Export Excel
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Tambah Warga -->
+    <div id="modalWarga" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle"><i class="fas fa-user-plus"></i> Tambah Warga Baru</h2>
+                <span class="close-modal" id="closeModal">&times;</span>
+            </div>
+            <form id="formTambahWarga">
+                <input type="hidden" id="wargaId" name="wargaId"> <!-- Untuk menyimpan ID warga saat edit -->
+                <div class="form-group">
+                    <label for="namaWarga">Nama Lengkap</label>
+                    <input type="text" id="namaWarga" class="form-input" placeholder="Masukkan nama warga" required>
+                </div>
+                <div class="form-group">
+                    <label for="m1">Retribusi Bulanan (Rupiah)</label>
+                    <div class="month-grid">
+                        <input type="text" id="m1" class="month-input" placeholder="Jan">
+                        <input type="text" id="m2" class="month-input" placeholder="Feb">
+                        <input type="text" id="m3" class="month-input" placeholder="Mar">
+                        <input type="text" id="m4" class="month-input" placeholder="Apr">
+                        <input type="text" id="m5" class="month-input" placeholder="Mei">
+                        <input type="text" id="m6" class="month-input" placeholder="Jun">
+                        <input type="text" id="m7" class="month-input" placeholder="Jul">
+                        <input type="text" id="m8" class="month-input" placeholder="Agu">
+                        <input type="text" id="m9" class="month-input" placeholder="Sep">
+                        <input type="text" id="m10" class="month-input" placeholder="Okt">
+                        <input type="text" id="m11" class="month-input" placeholder="Nov">
+                        <input type="text" id="m12" class="month-input" placeholder="Des">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btnHapusWarga" class="btn-danger" style="display: none;">Hapus Warga</button>
+                    <button type="button" id="btnBatal" class="btn-secondary">Batal</button>
+                    <button type="submit" id="modalSubmitBtn" class="btn-primary">Simpan Data</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Popup Konfirmasi Hapus -->
+    <div id="deleteConfirmPopup" class="popup-overlay">
+        <div class="popup-content">
+            <div class="icon-box" style="color: #d9534f; font-size: 50px; margin-bottom: 15px;">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h2>Konfirmasi Hapus</h2>
+            <p id="deleteConfirmMessage">Apakah Anda yakin ingin menghapus warga ini?</p>
+            <div class="modal-footer" style="justify-content: center; margin-top: 20px;">
+                <button type="button" id="btnBatalHapus" class="btn-secondary">Batal</button>
+                <button type="button" id="btnYaHapus" class="btn-danger" style="margin-right: 0;">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popup Notifikasi Sukses -->
+    <div id="actionSuccessPopup" class="popup-overlay">
+        <div class="popup-content">
+            <div class="checkmark-wrapper">
+                <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                    <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none" />
+                    <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+                </svg>
+            </div>
+            <h2 id="successPopupTitle">Berhasil!</h2>
+            <p id="successPopupMessage">Data telah diperbarui.</p>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+
+</html>
