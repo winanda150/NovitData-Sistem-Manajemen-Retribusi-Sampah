@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index, follow">
+    <meta name="description" content="Sistem manajemen retribusi pelayanan angkut sampah Br. Dangin Jalan.">
+    <title>Dashboard - NovitData</title>
+    <!-- Preconnect ke origin penting untuk mempercepat LCP -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://firestore.googleapis.com">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    
+    <!-- Critical CSS: Inlined untuk mempercepat FCP (First Contentful Paint) -->
+    <style>
+        #loadingOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #f4f7f6; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 9999;
+            transition: opacity 0.3s ease-out;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1); border-top: 4px solid #28a745;
+            border-radius: 50%; width: 40px; height: 40px;
+            animation: spin-loader 1s linear infinite; margin-bottom: 15px;
+        }
+        @keyframes spin-loader { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #loadingOverlay p { color: #4a4a4a; font-family: 'Poppins', sans-serif; font-size: 16px; }
+        #dashboardContent { display: none; }
+    </style>
+
+    <!-- Load Google Fonts secara asinkron untuk mencegah render-blocking -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" media="print" onload="this.media='all'">
+
+    <!-- Preload Font Awesome WOFF2 untuk mengurangi FOIT/FOUT -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+    <!-- Preload Firebase SDKs untuk mempercepat inisialisasi -->
+    <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js">
+    <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js">
+    <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore.js">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" crossorigin="anonymous">
+    <link rel="preload" href="style.css" as="style">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay">
+        <div class="spinner"></div>
+        <p>Memuat Dashboard...</p>
+    </div>
+
+    <!-- Dashboard Content -->
+    <div class="dashboard-container" id="dashboardContent">
+        <header class="dashboard-header">
+            <div class="header-info">
+                <h1>NovitData</h1>
+                <p id="welcome-text">Memuat data...</p>
+            </div>
+            <div class="header-actions">
+                <button id="themeToggle" class="btn-theme" aria-label="Toggle theme"><i class="fas fa-sun"></i></button>
+                <button id="logoutBtn" class="logoutButton logoutButton--dark" aria-label="Logout">
+                    <svg class="doorway" viewBox="0 0 100 100">
+                        <path
+                            d="M93.4 86.3H58.6c-1.9 0-3.4-1.5-3.4-3.4V17.1c0-1.9 1.5-3.4 3.4-3.4h34.8c1.9 0 3.4 1.5 3.4 3.4v65.8c0 1.9-1.5 3.4-3.4 3.4z" />
+                        <path class="bang"
+                            d="M40.5 43.7L26.6 31.4l-2.5 6.7zM41.9 50.4l-19.5-4-1.4 6.3zM40 57.4l-17.7 3.9 3.9 5.7z" />
+                    </svg>
+                    <svg class="figure" viewBox="0 0 100 100">
+                        <circle cx="52.1" cy="32.4" r="6.4" />
+                        <path
+                            d="M50.7 62.8c-1.2 2.5-3.6 5-7.2 4-3.2-.9-4.9-3.5-4-7.8.7-3.4 3.1-13.8 4.1-15.8 1.7-3.4 1.6-4.6 7-3.7 4.3.7 4.6 2.5 4.3 5.4-.4 3.7-2.8 15.1-4.2 17.9z" />
+                        <g class="arm1">
+                            <path
+                                d="M55.5 56.5l-6-9.5c-1-1.5-.6-3.5.9-4.4 1.5-1 3.7-1.1 4.6.4l6.1 10c1 1.5.3 3.5-1.1 4.4-1.5.9-3.5.5-4.5-.9z" />
+                            <path class="wrist1"
+                                d="M69.4 59.9L58.1 58c-1.7-.3-2.9-1.9-2.6-3.7.3-1.7 1.9-2.9 3.7-2.6l11.4 1.9c1.7.3 2.9 1.9 2.6 3.7-.4 1.7-2 2.9-3.8 2.6z" />
+                        </g>
+                        <g class="arm2">
+                            <path
+                                d="M34.2 43.6L45 40.3c1.7-.6 3.5.3 4 2 .6 1.7-.3 4-2 4.5l-10.8 2.8c-1.7.6-3.5-.3-4-2-.6-1.6.3-3.4 2-4z" />
+                            <path class="wrist2"
+                                d="M27.1 56.2L32 45.7c.7-1.6 2.6-2.3 4.2-1.6 1.6.7 2.3 2.6 1.6 4.2L33 58.8c-.7 1.6-2.6 2.3-4.2 1.6-1.7-.7-2.4-2.6-1.7-4.2z" />
+                        </g>
+                        <g class="leg1">
+                            <path
+                                d="M52.1 73.2s-7-5.7-7.9-6.5c-.9-.9-1.2-3.5-.1-4.9 1.1-1.4 3.8-1.9 5.2-.9l7.9 7c1.4 1.1 1.7 3.5.7 4.9-1.1 1.4-4.4 1.5-5.8.4z" />
+                            <path class="calf1"
+                                d="M52.6 84.4l-1-12.8c-.1-1.9 1.5-3.6 3.5-3.7 2-.1 3.7 1.4 3.8 3.4l1 12.8c.1 1.9-1.5 3.6-3.5 3.7-2 0-3.7-1.5-3.8-3.4z" />
+                        </g>
+                        <g class="leg2">
+                            <path
+                                d="M37.8 72.7s1.3-10.2 1.6-11.4 2.4-2.8 4.1-2.6c1.7.2 3.6 2.3 3.4 4l-1.8 11.1c-.2 1.7-1.7 3.3-3.4 3.1-1.8-.2-4.1-2.4-3.9-4.2z" />
+                            <path class="calf2"
+                                d="M29.5 82.3l9.6-10.9c1.3-1.4 3.6-1.5 5.1-.1 1.5 1.4.4 4.9-.9 6.3l-8.5 9.6c-1.3 1.4-3.6 1.5-5.1.1-1.4-1.3-1.5-3.5-.2-5z" />
+                        </g>
+                    </svg>
+                    <svg class="door" viewBox="0 0 100 100">
+                        <path
+                            d="M93.4 86.3H58.6c-1.9 0-3.4-1.5-3.4-3.4V17.1c0-1.9 1.5-3.4 3.4-3.4h34.8c1.9 0 3.4 1.5 3.4 3.4v65.8c0 1.9-1.5 3.4-3.4 3.4z" />
+                        <circle cx="66" cy="50" r="3.7" />
+                    </svg>
+                    <span class="button-text">Log Out</span>
+                </button>
+            </div>
+        </header>
+
+        <main class="content-section">
+            <!-- Baris Statistik -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(40, 167, 69, 0.1); color: #28a745;"><i
+                            class="fas fa-wallet"></i></div>
+                    <div class="stat-info">
+                        <span>Total Pendapatan</span>
+                        <h2 id="statTotalRevenue">Rp 0</h2>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(0, 123, 255, 0.1); color: #007bff;"><i
+                            class="fas fa-users"></i></div>
+                    <div class="stat-info">
+                        <span>Total Warga</span>
+                        <h2 id="statTotalWarga">0</h2>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-bar"> 
+                <h2>Data Retribusi Sampah <select id="tahunRetribusi" class="select-tahun" aria-label="Pilih Tahun Retribusi"></select></h2>
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Cari nama warga...">
+                </div>
+                <button id="btnTambahWarga" class="btn-primary"><i class="fas fa-plus"></i> Tambah Warga</button>
+            </div>
+
+            <div class="table-responsive">
+                <table id="tabelRetribusi">
+                    <thead>
+                        <tr>
+                            <th class="no-cell">No</th>
+                            <th class="nama-warga-cell">Nama Warga</th>
+                            <th>Jan</th>
+                            <th>Feb</th>
+                            <th>Mar</th>
+                            <th>Apr</th>
+                            <th>Mei</th>
+                            <th>Jun</th>
+                            <th>Jul</th>
+                            <th>Agu</th>
+                            <th>Sep</th>
+                            <th>Okt</th>
+                            <th>Nov</th>
+                            <th>Des</th>
+                            <th>Total</th>
+                            <th>Edit</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataWargaBody">
+                        <!-- Data warga akan diisi di sini melalui JavaScript -->
+                    </tbody>
+                    <tfoot id="dataWargaFooter">
+                        <!-- Total per bulan akan diisi di sini -->
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- New table footer for pagination and download -->
+            <div class="table-footer">
+                <div class="pagination-info">
+                    <!-- Info seperti "Menampilkan 1-10 dari 50 warga" akan muncul di sini -->
+                </div>
+                <div class="right-footer-actions">
+                    <div class="pagination-controls">
+                        <!-- Tombol pagination (Prev, 1, 2, Next) akan muncul di sini -->
+                    </div>
+                    <button id="btnExportExcel" class="btn-primary">
+                        <span class="btn-content-static">
+                            <i class="fas fa-file-excel"></i> Export Excel
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Tambah Warga -->
+    <div id="modalWarga" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle"><i class="fas fa-user-plus"></i> Tambah Warga Baru</h2>
+                <span class="close-modal" id="closeModal">&times;</span>
+            </div>
+            <form id="formTambahWarga">
+                <input type="hidden" id="wargaId" name="wargaId"> <!-- Untuk menyimpan ID warga saat edit -->
+                <div class="form-group">
+                    <label for="namaWarga">Nama Lengkap</label>
+                    <input type="text" id="namaWarga" class="form-input" placeholder="Masukkan nama warga" required>
+                </div>
+                <div class="form-group">
+                    <label for="m1">Retribusi Bulanan (Rupiah)</label>
+                    <div class="month-grid">
+                        <input type="text" id="m1" class="month-input" placeholder="Jan">
+                        <input type="text" id="m2" class="month-input" placeholder="Feb">
+                        <input type="text" id="m3" class="month-input" placeholder="Mar">
+                        <input type="text" id="m4" class="month-input" placeholder="Apr">
+                        <input type="text" id="m5" class="month-input" placeholder="Mei">
+                        <input type="text" id="m6" class="month-input" placeholder="Jun">
+                        <input type="text" id="m7" class="month-input" placeholder="Jul">
+                        <input type="text" id="m8" class="month-input" placeholder="Agu">
+                        <input type="text" id="m9" class="month-input" placeholder="Sep">
+                        <input type="text" id="m10" class="month-input" placeholder="Okt">
+                        <input type="text" id="m11" class="month-input" placeholder="Nov">
+                        <input type="text" id="m12" class="month-input" placeholder="Des">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btnHapusWarga" class="btn-danger" style="display: none;">Hapus
+                        Warga</button>
+                    <button type="button" id="btnBatal" class="btn-secondary">Batal</button>
+                    <button type="submit" id="modalSubmitBtn" class="btn-primary">Simpan Data</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Popup Konfirmasi Hapus -->
+    <div id="deleteConfirmPopup" class="popup-overlay">
+        <div class="popup-content">
+            <div class="icon-box" style="color: #d9534f; font-size: 50px; margin-bottom: 15px;">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h2>Konfirmasi Hapus</h2>
+            <p id="deleteConfirmMessage">Apakah Anda yakin ingin menghapus warga ini?</p>
+            <div class="modal-footer" style="justify-content: center; margin-top: 20px;">
+                <button type="button" id="btnBatalHapus" class="btn-secondary">Batal</button>
+                <button type="button" id="btnYaHapus" class="btn-danger" style="margin-right: 0;">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popup Notifikasi Sukses -->
+    <div id="actionSuccessPopup" class="popup-overlay">
+        <div class="popup-content">
+            <div class="checkmark-wrapper">
+                <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                    <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none" />
+                    <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+                </svg>
+            </div>
+            <h2 id="successPopupTitle">Berhasil!</h2>
+            <p id="successPopupMessage">Data telah diperbarui.</p>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+
+</html>
