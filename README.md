@@ -30,13 +30,6 @@ Website ini dibangun menggunakan:
 
 ---
 
-## 📦 Library yang Digunakan
-
-- GSAP (GreenSock Animation Platform) → animasi antarmuka  
-- SheetJS (xlsx) → export data ke Excel  
-
----
-
 ## 🎯 Tujuan Pengembangan
 
 Website ini dibuat untuk memberikan solusi digital dalam pengelolaan data retribusi agar lebih:
